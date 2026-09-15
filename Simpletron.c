@@ -29,4 +29,33 @@ int main(void){
 
 }
 
+void mostrarBienvenida(void){
 
+}
+
+void inicializar(void){
+
+    int i;
+
+    for(i = 0; i < TAM_MEMORIA; i++){
+        memory[i] = 0;
+    }
+
+    accumulator = 0;
+    instructionCounter = 0;
+    instructionRegister = 0;
+    operationCode = 0;
+    operand = 0;
+}
+
+void cargarPrograma(void){
+
+}
+
+void ejecutarPrograma(void){
+
+}
+
+void vaciadoMemoria(void){
+
+}
