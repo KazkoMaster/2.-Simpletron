@@ -58,8 +58,32 @@ void inicializar(void){
 
 void cargarPrograma(void){
 
-}
+    int posicion = 0;
+    int palabra;
+    int c;
 
+    while (posicion < TAM_MEMORIA){
+        printf ("%02d ? ", posicion);
+
+        if(scanf("%d", &palabra) != 1){
+            printf("*** Entrada invalida. Escriba un numero entero. ***\n");
+            while((c = getchar()) != '\n' && c!= EOF ){
+
+            }
+            continue;
+        }
+        if(palabra == CENTINELA)
+            break;
+
+        if(palabra < PALABRA_MIN || palabra > CENTINELA - 1){
+            printf(" *** Valor fuera de rango. Use un entero entre %d y %d ***\n", PALABRA_MIN, CENTINELA - 1);
+            continue;
+        }
+        memory[posicion] = palabra;
+        posicion++;
+    }
+
+    
 void ejecutarPrograma(void){
 
 }
