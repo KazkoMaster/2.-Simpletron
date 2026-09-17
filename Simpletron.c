@@ -31,6 +31,14 @@ int main(void){
 
 void mostrarBienvenida(void){
 
+    printf("*** Bienvenido a Simpletron! ***\n");
+    printf("*** Introduzca su programa una instruccion ***\n");
+    printf("*** (o palabra de datos) a la vez. Yo indicare ***\n");
+    printf("*** el numero de posicion y una interrogacion (?) ***\n");
+    printf("*** Ustede tecleara entonces la palabra para esa ***\n");
+    printf("*** posicion. Escriba 9999 para dejar de ***\n");
+    printf("*** introducir su programa ***\n");
+
 }
 
 void inicializar(void){
