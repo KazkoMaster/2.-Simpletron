@@ -30,6 +30,7 @@ void inicializar(void);
 void cargarPrograma(void);
 void ejecutarPrograma(void);
 void vaciadoMemoria(void);
+void errorFatal(char mensaje[]);
 
 int main(void){
     mostrarBienvenida();
@@ -102,6 +103,7 @@ void cargarPrograma(void){
 void ejecutarPrograma(void){
     
     int enEjecucion = 1;
+    int resultado;
 
     while (enEjecucion){
         instructionRegister = memory[instructionCounter];
@@ -133,21 +135,50 @@ void ejecutarPrograma(void){
                 break;
 
             case OP_ADD:
+                resultado = accumulator + memory[operand];
+                if (resultado < PALABRA_MIN || resultado > PALABRA_MAX){
+                    errorFatal("Error: Desbordamiento de acumulador");
+                    enEjecucion = 0;
+                    break;
+                }
                 accumulator += memory[operand];
                 instructionCounter++;
                 break;
 
             case OP_SUBSTRACT:
+                resultado = accumulator - memory[operand];
+                if (resultado < PALABRA_MIN || resultado > PALABRA_MAX){
+                    errorFatal("Error: Desbordamiento de acumulador");
+                    enEjecucion = 0;
+                    break;
+                }
                 accumulator -= memory[operand];
                 instructionCounter++;
                 break;
 
             case OP_DIVIDE:
-                accumulator /= memory[operand];
-                instructionCounter++;
+            if (memory[operand] == 0){
+                errorFatal("Intento dividir entre cero");
+                enEjecucion = 0;
                 break;
+            } 
+            resultado = accumulator + memory[operand];
+            if (resultado < PALABRA_MIN || resultado > PALABRA_MAX){
+                errorFatal("Error: Desbordamiento de acumulador");
+                enEjecucion = 0;
+                break;
+                }
+            accumulator /= memory[operand];
+            instructionCounter++;
+            break;
 
             case OP_MULTIPLY:
+            resultado = accumulator * memory[operand];
+                if (resultado < PALABRA_MIN || resultado > PALABRA_MAX){
+                    errorFatal("Error: Desbordamiento de acumulador");
+                    enEjecucion = 0;
+                    break;
+                }
                 accumulator *= memory[operand];
                 instructionCounter++;
                 break;
@@ -174,6 +205,11 @@ void ejecutarPrograma(void){
 
             case OP_HALT:
                 printf("*** Termino la ejecucion de Simpletron ***\n");
+                enEjecucion = 0;
+                break;
+
+            default:
+                errorFatal("Se intento ejecutar un codigo de operacion no valido");
                 enEjecucion = 0;
                 break;
         }
@@ -208,4 +244,9 @@ void vaciadoMemoria(void){
         }
         printf("\n");
     }
+}
+
+void errorFatal(char mensaje[]){
+    printf("\n*** %s ***\n", mensaje);
+    printf("*** La ejecucion termino anormalmente ***\n");
 }
