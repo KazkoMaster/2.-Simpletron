@@ -153,12 +153,23 @@ void ejecutarPrograma(void){
                 break;
 
             case OP_BRANCH:
+                instructionCounter = operand;
                 break;
 
             case OP_BRANCHENG:
+                if (accumulator < 0){
+                    instructionCounter = operand;
+                }else {
+                    instructionCounter++;
+                }
                 break;
 
             case OP_BRANCHZERO:
+                if (accumulator == 0){
+                    instructionCounter = operand;
+                }else {
+                    instructionCounter++;
+                }
                 break;
 
             case OP_HALT:
