@@ -82,12 +82,38 @@ void cargarPrograma(void){
         memory[posicion] = palabra;
         posicion++;
     }
-
+}
     
 void ejecutarPrograma(void){
-
+    
+    
 }
 
 void vaciadoMemoria(void){
+    int i, j;
 
+    printf("\nRegistros\n");
+    printf("acumulador: %+05d\n", accumulator);
+    printf("instructionCounter: %02d\n", instructionCounter);
+    printf("instructionRegister: %+05d\n", instructionRegister);
+    printf("operationCode: &02d\n", operationCode);
+    printf("operand: %02d\n", operand);
+
+    printf("memoria:\n");
+
+    printf("  ");
+    for(j = 0; j < 10; j++){
+        printf("%6d", j);
+    }
+    printf("\n");
+
+    for (i = 0; i < 10; i++)
+    {
+        printf("%2d", i);
+        for (j = 0; j < 10; j++)
+        {
+            printf(" %+05d", memory[i * 10 + j]);
+        }
+        printf("\n");
+    }
 }
