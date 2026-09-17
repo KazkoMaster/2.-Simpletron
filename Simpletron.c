@@ -5,6 +5,19 @@
 #define PALABRA_MAX 9999
 #define CENTINELA 9999
 
+#define OP_READ 10
+#define OP_WRITE 11
+#define OP_LOAD 20
+#define OP_STORE 21
+#define OP_ADD 30
+#define OP_SUBSTRACT 31
+#define OP_DIVIDE 32
+#define OP_MULTIPLY 33
+#define  OP_BRANCH 40
+#define OP_BRANCHENG 41
+#define OP_BRANCHZERO 42
+#define OP_HALT 43
+
 int memory[TAM_MEMORIA];
 int accumulator;
 int instructionCounter;
@@ -86,6 +99,60 @@ void cargarPrograma(void){
     
 void ejecutarPrograma(void){
     
+    int enEjecucion = 1;
+
+    while (enEjecucion){
+        instructionRegister = memory[instructionCounter];
+
+        operationCode = instructionRegister / 100;
+        operand = instructionRegister % 100;
+
+        switch (operationCode){
+
+            case OP_READ:
+            printf("?");
+            scanf("%d", &memory[operand]);
+            instructionCounter++;
+                break;
+
+            case OP_WRITE:
+            printf("%+05d\n", memory[operand]);
+            instructionCounter++;
+                break;
+
+            case OP_LOAD:
+                break;
+
+            case OP_STORE:
+                break;
+
+            case OP_ADD:
+                break;
+
+            case OP_SUBSTRACT:
+                break;
+
+            case OP_DIVIDE:
+                break;
+
+            case OP_MULTIPLY:
+                break;
+
+            case OP_BRANCH:
+                break;
+
+            case OP_BRANCHENG:
+                break;
+
+            case OP_BRANCHZERO:
+                break;
+
+            case OP_HALT:
+                printf("*** Termino la ejecucion de Simpletron ***\n");
+                enEjecucion = 0;
+                break;
+        }
+    }
     
 }
 
@@ -96,7 +163,7 @@ void vaciadoMemoria(void){
     printf("acumulador: %+05d\n", accumulator);
     printf("instructionCounter: %02d\n", instructionCounter);
     printf("instructionRegister: %+05d\n", instructionRegister);
-    printf("operationCode: &02d\n", operationCode);
+    printf("operationCode: %02d\n", operationCode);
     printf("operand: %02d\n", operand);
 
     printf("memoria:\n");
