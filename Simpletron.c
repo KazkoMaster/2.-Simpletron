@@ -95,6 +95,8 @@ void cargarPrograma(void){
         memory[posicion] = palabra;
         posicion++;
     }
+    printf("*** Se termino de cargar el programa ***\n");
+    printf("*** Comienza la ejecucion del programa ***\n");
 }
     
 void ejecutarPrograma(void){
@@ -110,7 +112,7 @@ void ejecutarPrograma(void){
         switch (operationCode){
 
             case OP_READ:
-            printf("?");
+            printf("? ");
             scanf("%d", &memory[operand]);
             instructionCounter++;
                 break;
@@ -121,21 +123,33 @@ void ejecutarPrograma(void){
                 break;
 
             case OP_LOAD:
+                accumulator = memory[operand];
+                instructionCounter++;
                 break;
 
             case OP_STORE:
+            memory[operand] = accumulator;
+            instructionCounter++;
                 break;
 
             case OP_ADD:
+                accumulator += memory[operand];
+                instructionCounter++;
                 break;
 
             case OP_SUBSTRACT:
+                accumulator -= memory[operand];
+                instructionCounter++;
                 break;
 
             case OP_DIVIDE:
+                accumulator /= memory[operand];
+                instructionCounter++;
                 break;
 
             case OP_MULTIPLY:
+                accumulator *= memory[operand];
+                instructionCounter++;
                 break;
 
             case OP_BRANCH:
