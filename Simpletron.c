@@ -1,3 +1,9 @@
+/* ==========================================================
+ *  Simpletron.c - Simulador de la computadora Simpletron
+ *  Autor: Xavier Hernandez Toledo
+ *  Programacion Avanzada - Prof. Roberto Salazar
+ * ========================================================== */
+
 #include <stdio.h>
 
 #define TAM_MEMORIA 100
@@ -10,11 +16,11 @@
 #define OP_LOAD 20
 #define OP_STORE 21
 #define OP_ADD 30
-#define OP_SUBSTRACT 31
+#define OP_SUBTRACT 31
 #define OP_DIVIDE 32
 #define OP_MULTIPLY 33
-#define  OP_BRANCH 40
-#define OP_BRANCHENG 41
+#define OP_BRANCH 40
+#define OP_BRANCHNEG 41
 #define OP_BRANCHZERO 42
 #define OP_HALT 43
 
@@ -48,10 +54,10 @@ void mostrarBienvenida(void){
     printf("*** Bienvenido a Simpletron! ***\n");
     printf("*** Introduzca su programa una instruccion ***\n");
     printf("*** (o palabra de datos) a la vez. Yo indicare ***\n");
-    printf("*** el numero de posicion y una interrogacion (?) ***\n");
-    printf("*** Ustede tecleara entonces la palabra para esa ***\n");
+    printf("*** el numero de posicion y una interrogacion (?). ***\n");
+    printf("*** Usted tecleara entonces la palabra para esa ***\n");
     printf("*** posicion. Escriba 9999 para dejar de ***\n");
-    printf("*** introducir su programa ***\n");
+    printf("*** introducir su programa. ***\n");
 
 }
 
@@ -90,7 +96,7 @@ void cargarPrograma(void){
             break;
 
         if(palabra < PALABRA_MIN || palabra > CENTINELA - 1){
-            printf(" *** Valor fuera de rango. Use un entero entre %d y %d ***\n", PALABRA_MIN, CENTINELA - 1);
+            printf("*** Valor fuera de rango. Use un entero entre %d y %d. ***\n", PALABRA_MIN, CENTINELA - 1);
             continue;
         }
         memory[posicion] = palabra;
@@ -102,10 +108,19 @@ void cargarPrograma(void){
     
 void ejecutarPrograma(void){
     
+    int valor;
+    int c;
     int enEjecucion = 1;
     int resultado;
 
     while (enEjecucion){
+
+         if (instructionCounter < 0 || instructionCounter >= TAM_MEMORIA) {
+            errorFatal("El contador de instrucciones salio de la memoria");
+            enEjecucion = 0;
+            break;
+        }
+
         instructionRegister = memory[instructionCounter];
 
         operationCode = instructionRegister / 100;
@@ -114,9 +129,23 @@ void ejecutarPrograma(void){
         switch (operationCode){
 
             case OP_READ:
-            printf("? ");
-            scanf("%d", &memory[operand]);
-            instructionCounter++;
+                while (1) {
+                    printf("? ");
+                    if (scanf("%d", &valor) != 1) {
+                        printf("*** Entrada invalida. Escriba un numero entero. ***\n");
+                        while ((c = getchar()) != '\n' && c != EOF) {
+                        }
+                        continue;
+                    }
+                    if (valor < PALABRA_MIN || valor > PALABRA_MAX) {
+                        printf("*** Valor fuera de rango. Use un entero entre %d y %d. ***\n",
+                               PALABRA_MIN, PALABRA_MAX);
+                        continue;
+                    }
+                    break;
+                }
+                memory[operand] = valor;
+                instructionCounter++;
                 break;
 
             case OP_WRITE:
@@ -137,49 +166,49 @@ void ejecutarPrograma(void){
             case OP_ADD:
                 resultado = accumulator + memory[operand];
                 if (resultado < PALABRA_MIN || resultado > PALABRA_MAX){
-                    errorFatal("Error: Desbordamiento de acumulador");
+                    errorFatal("Desbordamiento del acumulador");
                     enEjecucion = 0;
                     break;
                 }
-                accumulator += memory[operand];
+                accumulator = resultado;
                 instructionCounter++;
                 break;
 
-            case OP_SUBSTRACT:
+            case OP_SUBTRACT:
                 resultado = accumulator - memory[operand];
                 if (resultado < PALABRA_MIN || resultado > PALABRA_MAX){
-                    errorFatal("Error: Desbordamiento de acumulador");
+                    errorFatal("Desbordamiento del acumulador");
                     enEjecucion = 0;
                     break;
                 }
-                accumulator -= memory[operand];
+                accumulator = resultado;
                 instructionCounter++;
                 break;
 
             case OP_DIVIDE:
             if (memory[operand] == 0){
-                errorFatal("Intento dividir entre cero");
+                errorFatal("Intento de dividir entre cero");
                 enEjecucion = 0;
                 break;
             } 
-            resultado = accumulator + memory[operand];
+            resultado = accumulator / memory[operand];
             if (resultado < PALABRA_MIN || resultado > PALABRA_MAX){
-                errorFatal("Error: Desbordamiento de acumulador");
+                errorFatal("Desbordamiento del acumulador");
                 enEjecucion = 0;
                 break;
                 }
-            accumulator /= memory[operand];
+            accumulator = resultado;
             instructionCounter++;
             break;
 
             case OP_MULTIPLY:
             resultado = accumulator * memory[operand];
                 if (resultado < PALABRA_MIN || resultado > PALABRA_MAX){
-                    errorFatal("Error: Desbordamiento de acumulador");
+                    errorFatal("Desbordamiento del acumulador");
                     enEjecucion = 0;
                     break;
                 }
-                accumulator *= memory[operand];
+                accumulator = resultado;
                 instructionCounter++;
                 break;
 
@@ -187,7 +216,7 @@ void ejecutarPrograma(void){
                 instructionCounter = operand;
                 break;
 
-            case OP_BRANCHENG:
+            case OP_BRANCHNEG:
                 if (accumulator < 0){
                     instructionCounter = operand;
                 }else {
@@ -220,14 +249,14 @@ void ejecutarPrograma(void){
 void vaciadoMemoria(void){
     int i, j;
 
-    printf("\nRegistros\n");
-    printf("acumulador: %+05d\n", accumulator);
-    printf("instructionCounter: %02d\n", instructionCounter);
+    printf("\nRegistros:\n");
+    printf("acumulador:          %+05d\n", accumulator);
+    printf("instructionCounter:     %02d\n", instructionCounter);
     printf("instructionRegister: %+05d\n", instructionRegister);
-    printf("operationCode: %02d\n", operationCode);
-    printf("operand: %02d\n", operand);
+    printf("operationCode:          %02d\n", operationCode);
+    printf("operand:                %02d\n", operand);
 
-    printf("memoria:\n");
+    printf("\nMEMORIA\n");
 
     printf("  ");
     for(j = 0; j < 10; j++){
@@ -248,5 +277,5 @@ void vaciadoMemoria(void){
 
 void errorFatal(char mensaje[]){
     printf("\n*** %s ***\n", mensaje);
-    printf("*** La ejecucion termino anormalmente ***\n");
+    printf("*** La ejecucion de Simpletron termino anormalmente ***\n");
 }
