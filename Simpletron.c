@@ -6,10 +6,11 @@
 
 #include <stdio.h>
 
-#define TAM_MEMORIA 100
-#define PALABRA_MIN -9999
-#define PALABRA_MAX 9999
-#define CENTINELA 9999
+#define TAM_MEMORIA 1000
+#define PALABRA_MIN -99999
+#define PALABRA_MAX 99999
+#define CENTINELA 99999
+#define DIVISOR_OPERANDO 1000
 
 #define OP_READ 10
 #define OP_WRITE 11
@@ -30,6 +31,7 @@ int instructionCounter;
 int instructionRegister;
 int operationCode;
 int operand;
+int direccionValida(int direccion);
 
 void mostrarBienvenida(void);
 void inicializar(void);
@@ -56,7 +58,7 @@ void mostrarBienvenida(void){
     printf("*** (o palabra de datos) a la vez. Yo indicare ***\n");
     printf("*** el numero de posicion y una interrogacion (?). ***\n");
     printf("*** Usted tecleara entonces la palabra para esa ***\n");
-    printf("*** posicion. Escriba 9999 para dejar de ***\n");
+    printf("*** posicion. Escriba 99999 para dejar de ***\n");
     printf("*** introducir su programa. ***\n");
 
 }
@@ -83,7 +85,7 @@ void cargarPrograma(void){
     int c;
 
     while (posicion < TAM_MEMORIA){
-        printf ("%02d ? ", posicion);
+        printf ("%03d ? ", posicion);
 
         if(scanf("%d", &palabra) != 1){
             printf("*** Entrada invalida. Escriba un numero entero. ***\n");
@@ -123,8 +125,14 @@ void ejecutarPrograma(void){
 
         instructionRegister = memory[instructionCounter];
 
-        operationCode = instructionRegister / 100;
-        operand = instructionRegister % 100;
+        operationCode = instructionRegister / DIVISOR_OPERANDO;
+        operand = instructionRegister % DIVISOR_OPERANDO;
+
+        if (!direccionValida(operand)) {
+            errorFatal("Direccion de memoria fuera de rango");
+            enEjecucion = 0;
+            break;
+        }
 
         switch (operationCode){
 
@@ -149,7 +157,7 @@ void ejecutarPrograma(void){
                 break;
 
             case OP_WRITE:
-            printf("%+05d\n", memory[operand]);
+            printf("%+06d\n", memory[operand]);
             instructionCounter++;
                 break;
 
@@ -250,26 +258,26 @@ void vaciadoMemoria(void){
     int i, j;
 
     printf("\nRegistros:\n");
-    printf("acumulador:          %+05d\n", accumulator);
-    printf("instructionCounter:     %02d\n", instructionCounter);
-    printf("instructionRegister: %+05d\n", instructionRegister);
-    printf("operationCode:          %02d\n", operationCode);
-    printf("operand:                %02d\n", operand);
+    printf("acumulador:          %+06d\n", accumulator);
+    printf("instructionCounter:     %03d\n", instructionCounter);
+    printf("instructionRegister: %+06d\n", instructionRegister);
+    printf("operationCode:           %02d\n", operationCode);
+    printf("operand:                %03d\n", operand);
 
     printf("\nMEMORIA\n");
 
-    printf("  ");
+    printf("   ");
     for(j = 0; j < 10; j++){
-        printf("%6d", j);
+        printf("%7d", j);
     }
     printf("\n");
 
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < TAM_MEMORIA / 10; i++)
     {
-        printf("%2d", i);
+        printf("%3d", i * 10);
         for (j = 0; j < 10; j++)
         {
-            printf(" %+05d", memory[i * 10 + j]);
+            printf(" %+06d", memory[i * 10 + j]);
         }
         printf("\n");
     }
@@ -278,4 +286,8 @@ void vaciadoMemoria(void){
 void errorFatal(char mensaje[]){
     printf("\n*** %s ***\n", mensaje);
     printf("*** La ejecucion de Simpletron termino anormalmente ***\n");
+}
+
+int direccionValida(int direccion){
+    return direccion >= 0 && direccion < TAM_MEMORIA;
 }
