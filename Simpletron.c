@@ -12,6 +12,9 @@
 #define CENTINELA 99999
 #define DIVISOR_OPERANDO 1000
 
+#define ARCHIVO_PROGRAMA "programa.simp"
+#define TAM_LINEA 100
+
 #define OP_READ 10
 #define OP_WRITE 11
 #define OP_LOAD 20
@@ -35,15 +38,36 @@ int direccionValida(int direccion);
 
 void mostrarBienvenida(void);
 void inicializar(void);
-void cargarPrograma(void);
+int cargarPrograma(FILE *fuente, int interactivo);
+int leerDato(int *valor);
 void ejecutarPrograma(void);
 void vaciadoMemoria(void);
 void errorFatal(char mensaje[]);
 
 int main(void){
-    mostrarBienvenida();
+
+    FILE *archivo;
+    int cargaCorrecta;
+
     inicializar();
-    cargarPrograma();
+
+    archivo = fopen(ARCHIVO_PROGRAMA, "r");
+
+    if (archivo != NULL){
+        printf("*** Bienvenido a Simpletron! ***\n");
+        printf("*** Cargando programa desde %s***\n", ARCHIVO_PROGRAMA);
+        cargaCorrecta = cargarPrograma(archivo, 0);
+        fclose(archivo);
+    } else{
+        mostrarBienvenida();
+        cargaCorrecta =  cargarPrograma(stdin, 1);
+    }
+
+    if(!cargaCorrecta){
+        printf("*** La carga fallo. El programa no se ejecutara. ***\n");
+        return 1;
+    }
+
     ejecutarPrograma();
     vaciadoMemoria();
 
@@ -78,40 +102,98 @@ void inicializar(void){
     operand = 0;
 }
 
-void cargarPrograma(void){
+int cargarPrograma(FILE *fuente, int interactivo){
 
+    char linea[TAM_LINEA];
+    char sobrante;
     int posicion = 0;
+    int numeroLinea = 0;
     int palabra;
-    int c;
+    int leidos;
 
-    while (posicion < TAM_MEMORIA){
-        printf ("%03d ? ", posicion);
+    while(posicion < TAM_MEMORIA){
 
-        if(scanf("%d", &palabra) != 1){
-            printf("*** Entrada invalida. Escriba un numero entero. ***\n");
-            while((c = getchar()) != '\n' && c!= EOF ){
-
-            }
-            continue;
+        if(interactivo){
+            printf("%03d ? ", posicion);
         }
-        if(palabra == CENTINELA)
+
+        if(fgets(linea, TAM_LINEA, fuente)== NULL){
             break;
+        }
 
-        if(palabra < PALABRA_MIN || palabra > CENTINELA - 1){
-            printf("*** Valor fuera de rango. Use un entero entre %d y %d. ***\n", PALABRA_MIN, CENTINELA - 1);
+        numeroLinea++;
+
+        leidos = sscanf(linea, "%d %c", &palabra, &sobrante);
+
+        if(leidos == EOF){
             continue;
         }
+
+        if(leidos == 1 && palabra == CENTINELA){
+            break;
+        }
+
+        if(leidos != 1 || palabra < PALABRA_MIN || palabra > CENTINELA - 1){
+
+            if(!interactivo){
+                printf("*** Error en %s, linea %d ***\n", ARCHIVO_PROGRAMA, numeroLinea);
+            }
+
+            if(leidos != 1){
+                printf("*** Entrada invalida. Escriba un numero entero. ***\n");
+            } else{
+                printf("*** Valor fuera de rango. Use un entero entre %d y %d. ***\n",  PALABRA_MIN, CENTINELA - 1);
+            }
+            if(interactivo){
+                continue;
+            }
+
+            return 0;
+        }
+
         memory[posicion] = palabra;
         posicion++;
     }
-    printf("*** Se termino de cargar el programa ***\n");
+
+    printf("*** Se termino de cargar el programa (%d palabras) ***\n", posicion);
     printf("*** Comienza la ejecucion del programa ***\n");
+
+    return 1;
+}
+
+int leerDato(int *valor){
+
+    int c;
+    int leidos;
+
+    while (1){
+        printf("? ");
+        leidos = scanf("%d", valor);
+
+        if(leidos == EOF){
+            return 0;
+        }
+
+        if(leidos != 1){
+            printf("*** Entrada invalida. Escriba un numero entero. ***\n");
+            while((c = getchar()) != '\n' && c != EOF){
+                
+            }
+            continue;
+        }
+
+        if(*valor < PALABRA_MIN || *valor > PALABRA_MAX){
+            printf("*** Valor fuera de rango. Use un entero entre %d y %d. ***\n", PALABRA_MIN, PALABRA_MAX);
+            continue;
+        }
+
+        return 1;
+    }
 }
     
 void ejecutarPrograma(void){
     
     int valor;
-    int c;
     int enEjecucion = 1;
     int resultado;
 
@@ -137,19 +219,9 @@ void ejecutarPrograma(void){
         switch (operationCode){
 
             case OP_READ:
-                while (1) {
-                    printf("? ");
-                    if (scanf("%d", &valor) != 1) {
-                        printf("*** Entrada invalida. Escriba un numero entero. ***\n");
-                        while ((c = getchar()) != '\n' && c != EOF) {
-                        }
-                        continue;
-                    }
-                    if (valor < PALABRA_MIN || valor > PALABRA_MAX) {
-                        printf("*** Valor fuera de rango. Use un entero entre %d y %d. ***\n",
-                               PALABRA_MIN, PALABRA_MAX);
-                        continue;
-                    }
+                if(!leerDato(&valor)){
+                    errorFatal("Se termino la entrada de datos");
+                    enEjecucion = 0;
                     break;
                 }
                 memory[operand] = valor;
