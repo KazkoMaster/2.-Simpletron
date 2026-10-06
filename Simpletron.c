@@ -23,6 +23,8 @@
 #define OP_SUBTRACT 31
 #define OP_DIVIDE 32
 #define OP_MULTIPLY 33
+#define OP_MOD 34
+#define OP_POW 35
 #define OP_BRANCH 40
 #define OP_BRANCHNEG 41
 #define OP_BRANCHZERO 42
@@ -40,6 +42,7 @@ void mostrarBienvenida(void);
 void inicializar(void);
 int cargarPrograma(FILE *fuente, int interactivo);
 int leerDato(int *valor);
+int calcularPotencia(int base, int exponente, int *resultado);
 void ejecutarPrograma(void);
 void vaciadoMemoria(void);
 void errorFatal(char mensaje[]);
@@ -195,7 +198,8 @@ void ejecutarPrograma(void){
     
     int valor;
     int enEjecucion = 1;
-    int resultado;
+    int potencia;
+    long long resultado;
 
     while (enEjecucion){
 
@@ -250,7 +254,7 @@ void ejecutarPrograma(void){
                     enEjecucion = 0;
                     break;
                 }
-                accumulator = resultado;
+                accumulator = (int) resultado;
                 instructionCounter++;
                 break;
 
@@ -261,7 +265,7 @@ void ejecutarPrograma(void){
                     enEjecucion = 0;
                     break;
                 }
-                accumulator = resultado;
+                accumulator = (int) resultado;
                 instructionCounter++;
                 break;
 
@@ -277,18 +281,43 @@ void ejecutarPrograma(void){
                 enEjecucion = 0;
                 break;
                 }
-            accumulator = resultado;
+            accumulator = (int) resultado;
             instructionCounter++;
             break;
 
             case OP_MULTIPLY:
-            resultado = accumulator * memory[operand];
+            resultado = (long long) accumulator * memory[operand];
                 if (resultado < PALABRA_MIN || resultado > PALABRA_MAX){
                     errorFatal("Desbordamiento del acumulador");
                     enEjecucion = 0;
                     break;
                 }
-                accumulator = resultado;
+                accumulator = (int) resultado;
+                instructionCounter++;
+                break;
+
+            case OP_MOD:
+            if(memory[operand] == 0){
+                errorFatal("Intento de calcular el residuo entre 0");
+                enEjecucion = 0;
+                break;
+            }
+            accumulator = accumulator % memory[operand];
+            instructionCounter++;
+            break;
+
+            case OP_POW:
+                if(memory[operand] < 0){
+                    errorFatal("Exponente negativo no permitido");
+                    enEjecucion = 0;
+                    break;
+                }
+                if(!calcularPotencia(accumulator, memory[operand], &potencia)){
+                    errorFatal("Desbordamiento del acumulador");
+                    enEjecucion = 0;
+                    break;
+                }
+                accumulator = potencia;
                 instructionCounter++;
                 break;
 
@@ -353,6 +382,21 @@ void vaciadoMemoria(void){
         }
         printf("\n");
     }
+}
+
+int calcularPotencia(int base, int exponente, int *resultado){
+
+    long long acomulado = 1;
+    int i;
+
+    for(i = 0; i < exponente; i++){
+        acomulado *= base;
+        if(acomulado < PALABRA_MIN || acomulado > PALABRA_MAX){
+            return 0;
+        }
+    }
+    *resultado = (int) acomulado;
+    return 1;
 }
 
 void errorFatal(char mensaje[]){
