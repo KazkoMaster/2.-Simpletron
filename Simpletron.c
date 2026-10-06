@@ -17,6 +17,7 @@
 
 #define OP_READ 10
 #define OP_WRITE 11
+#define OP_NEWLINE 12
 #define OP_LOAD 20
 #define OP_STORE 21
 #define OP_ADD 30
@@ -239,6 +240,11 @@ void ejecutarPrograma(void){
 
             case OP_LOAD:
                 accumulator = memory[operand];
+                instructionCounter++;
+                break;
+
+            case OP_NEWLINE:
+                printf("\n");
                 instructionCounter++;
                 break;
 
