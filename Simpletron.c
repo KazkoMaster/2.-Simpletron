@@ -14,10 +14,14 @@
 
 #define ARCHIVO_PROGRAMA "programa.simp"
 #define TAM_LINEA 100
+#define MAX_CADENA 99
+#define MAX_ASCII 255 
 
 #define OP_READ 10
 #define OP_WRITE 11
 #define OP_NEWLINE 12
+#define OP_READ_STR 13
+#define OP_WRITE_STR 14
 #define OP_LOAD 20
 #define OP_STORE 21
 #define OP_ADD 30
@@ -43,6 +47,8 @@ void mostrarBienvenida(void);
 void inicializar(void);
 int cargarPrograma(FILE *fuente, int interactivo);
 int leerDato(int *valor);
+int leerCadena(int base);
+int escribirCadena(int base);
 int calcularPotencia(int base, int exponente, int *resultado);
 void ejecutarPrograma(void);
 void vaciadoMemoria(void);
@@ -190,9 +196,87 @@ int leerDato(int *valor){
             printf("*** Valor fuera de rango. Use un entero entre %d y %d. ***\n", PALABRA_MIN, PALABRA_MAX);
             continue;
         }
+        while((c = getchar()) != '\n' && c != EOF){
+
+        }
 
         return 1;
     }
+}
+
+int leerCadena(int base){
+
+    char texto[MAX_CADENA + 2];
+    int longitud = 0;
+    int c;
+    int i;
+
+    printf("? ");
+
+    if(fgets(texto, MAX_CADENA + 2, stdin) == NULL){
+        errorFatal("Se termino la entrada de datos");
+        return 0;
+    }
+
+    while(texto[longitud] != '\0' && texto[longitud] != '\n' && texto[longitud] != '\r'){
+        longitud++;
+    }
+
+    if(longitud > MAX_CADENA){
+        printf("*** Aviso: la cadena se recorto a %d caracteres ***\n", MAX_CADENA);
+        longitud = MAX_CADENA;
+        while((c = getchar()) != '\n' && c != EOF){
+
+        }
+    }
+
+    if(base + longitud >= TAM_MEMORIA){
+        errorFatal("La cadena no cabe en la memoria");
+        return 0;
+    }
+
+    memory[base] = longitud * DIVISOR_OPERANDO;
+
+    for(i = 1; i <= longitud; i++){
+        memory[base + i] = i * DIVISOR_OPERANDO + (unsigned char) texto[i - 1];
+    }
+
+    return 1;
+}
+
+int escribirCadena(int base){
+    
+    int encabezado = memory[base];
+    int longitud;
+    int palabra;
+    int i;
+
+    if(encabezado < 0 || encabezado % DIVISOR_OPERANDO != 0){
+        errorFatal("No hay una cadena valida en esa direccion");
+        return 0;
+    }
+
+    longitud = encabezado / DIVISOR_OPERANDO;
+
+    if(base + longitud >= TAM_MEMORIA){
+        errorFatal("La cadena se sale de la memoria");
+        return 0;
+    }
+
+    for(i = 1; i <= longitud; i++){
+
+        palabra = memory[base + i];
+
+        if(palabra / DIVISOR_OPERANDO != i || palabra % DIVISOR_OPERANDO > MAX_ASCII){
+            errorFatal("La cadena tiene un caracter con formato invalido");
+            return 0;
+        }
+    }
+
+    for(i = 1; i <= longitud; i++){
+        printf("%c", memory[base + i] % DIVISOR_OPERANDO);
+    }
+    return 1;
 }
     
 void ejecutarPrograma(void){
@@ -240,6 +324,22 @@ void ejecutarPrograma(void){
 
             case OP_LOAD:
                 accumulator = memory[operand];
+                instructionCounter++;
+                break;
+
+            case OP_READ_STR:
+                if(!leerCadena(operand)){
+                    enEjecucion = 0;
+                    break;
+                }
+                instructionCounter++;
+                break;
+
+            case OP_WRITE_STR:
+                if(!escribirCadena(operand)){
+                    enEjecucion = 0;
+                    break;
+                }
                 instructionCounter++;
                 break;
 
