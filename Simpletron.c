@@ -34,6 +34,16 @@
 #define OP_BRANCHNEG 41
 #define OP_BRANCHZERO 42
 #define OP_HALT 43
+#define OP_READ_F 15
+#define OP_WRITE_F 16
+#define OP_LOAD_F 22
+#define OP_STORE_F 23
+#define OP_ADD_F 50
+#define OP_SUBTRACT_F 51
+#define OP_DIVIDE_F 52
+#define OP_MULTIPLY_F 53
+#define FLOTANTE_MAX 1.0e12
+
 
 int memory[TAM_MEMORIA];
 int accumulator;
@@ -42,6 +52,9 @@ int instructionRegister;
 int operationCode;
 int operand;
 int direccionValida(int direccion);
+
+double memoriaFlotante[TAM_MEMORIA];
+double acumuladorFlotante;
 
 void mostrarBienvenida(void);
 void inicializar(void);
@@ -53,6 +66,9 @@ int calcularPotencia(int base, int exponente, int *resultado);
 void ejecutarPrograma(void);
 void vaciadoMemoria(void);
 void errorFatal(char mensaje[]);
+int flotanteValido(double valor);
+int leerFlotante(double *valor);
+int operarFlotante(int codigo, double valor);
 
 int main(void){
 
@@ -103,9 +119,11 @@ void inicializar(void){
 
     for(i = 0; i < TAM_MEMORIA; i++){
         memory[i] = 0;
+        memoriaFlotante[i] = 0.0;
     }
 
     accumulator = 0;
+    acumuladorFlotante = 0.0;
     instructionCounter = 0;
     instructionRegister = 0;
     operationCode = 0;
@@ -278,6 +296,67 @@ int escribirCadena(int base){
     }
     return 1;
 }
+
+int flotanteValido(double valor){
+    return valor >= -FLOTANTE_MAX && valor <= FLOTANTE_MAX;
+}
+
+int leerFlotante(double *valor){
+
+    char linea[TAM_LINEA];
+    char sobrante;
+    int leidos;
+
+        while(1){
+            printf("? ");
+
+            if(fgets(linea, TAM_LINEA, stdin) == NULL){
+                return 0;
+            }
+
+            leidos = sscanf(linea, "%lf %c", valor, &sobrante);
+
+            if(leidos != 1){
+                printf("*** Entrada invalida. Escriba un numero, por ejemplo 3.5 ***\n");
+                continue;
+            }
+
+            if(!flotanteValido(*valor)){
+                printf("*** Valor fuera de rango. Use un numero entre %.0f y %.0f. ***\n", -FLOTANTE_MAX, FLOTANTE_MAX);
+                continue;
+            }
+        return 1;
+    }
+}
+
+int operarFlotante(int codigo, double valor){
+
+    double resultado;
+
+    if(codigo == OP_DIVIDE_F && valor == 0.0){
+        errorFatal("Intento de dividir entre cero");
+        return 0;
+    }
+
+    if(codigo == OP_ADD_F){
+        resultado = acumuladorFlotante + valor;
+   } else if(codigo == OP_SUBTRACT_F){
+        resultado = acumuladorFlotante - valor;
+   } else if( codigo == OP_DIVIDE_F){
+    resultado = acumuladorFlotante / valor;
+   } else{
+    resultado = acumuladorFlotante * valor;
+   }
+
+   if(!flotanteValido(resultado)){
+    errorFatal("Desbordamiento del acumulador flotante");
+    return 0;
+   }
+
+   acumuladorFlotante = resultado;
+   return 1;
+}
+
     
 void ejecutarPrograma(void){
     
@@ -427,6 +506,41 @@ void ejecutarPrograma(void){
                 instructionCounter++;
                 break;
 
+            case OP_READ_F:
+                if(!leerFlotante(&memoriaFlotante[operand])){
+                errorFatal("Se termino la entrada de datos");
+                enEjecucion = 0;
+                break;
+                }
+                instructionCounter++;
+                break;
+
+            case OP_WRITE_F:
+                printf("%.4f\n", memoriaFlotante[operand]);
+                instructionCounter++;
+                break;
+
+            case OP_LOAD_F:
+                acumuladorFlotante = memoriaFlotante[operand];
+                instructionCounter++;
+                break;
+
+            case OP_STORE_F:
+                memoriaFlotante[operand] = acumuladorFlotante;
+                instructionCounter++;
+                break;
+
+            case OP_ADD_F:
+            case OP_SUBTRACT_F:
+            case OP_DIVIDE_F:
+            case OP_MULTIPLY_F:
+                if(!operarFlotante(operationCode, memoriaFlotante[operand])){
+                    enEjecucion = 0;
+                    break;
+                }
+                instructionCounter++;
+                break;
+
             case OP_BRANCH:
                 instructionCounter = operand;
                 break;
@@ -470,6 +584,7 @@ void vaciadoMemoria(void){
     printf("instructionRegister: %+06d\n", instructionRegister);
     printf("operationCode:           %02d\n", operationCode);
     printf("operand:                %03d\n", operand);
+    printf("acumulador flotante: %.4f\n",acumuladorFlotante);
 
     printf("\nMEMORIA\n");
 
@@ -487,6 +602,14 @@ void vaciadoMemoria(void){
             printf(" %+06d", memory[i * 10 + j]);
         }
         printf("\n");
+    }
+
+    printf("\n MEMORIA FLOTANTE (posiciones distintas de cero)\n");
+
+    for(i = 0; i < TAM_MEMORIA; i++){
+        if(memoriaFlotante[i] != 0.0){
+            printf("%03d: %.4f\n", i, memoriaFlotante[i]);
+        }
     }
 }
 
