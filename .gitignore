@@ -1,4 +1,8 @@
+# Ejecutables y objetos
 *.o
 *.exe
-simpletron
+*.out
+/simpletron
+
+# Configuracion local del editor
 .vscode/
