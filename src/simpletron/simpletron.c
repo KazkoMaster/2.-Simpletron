@@ -5,6 +5,7 @@
  * ========================================================== */
 
 #include <stdio.h>
+#include <string.h>
 
 #define TAM_MEMORIA 1000
 #define PALABRA_MIN -99999
@@ -58,7 +59,7 @@ double acumuladorFlotante;
 
 void mostrarBienvenida(void);
 void inicializar(void);
-int cargarPrograma(FILE *fuente, int interactivo);
+int cargarPrograma(FILE *fuente, int interactivo, const char *nombreArchivo);
 int leerDato(int *valor);
 int leerCadena(int base);
 int escribirCadena(int base);
@@ -70,23 +71,36 @@ int flotanteValido(double valor);
 int leerFlotante(double *valor);
 int operarFlotante(int codigo, double valor);
 
-int main(void){
+int main(int argc, char *argv[]){
 
     FILE *archivo;
+    const char *nombreArchivo = ARCHIVO_PROGRAMA;
     int cargaCorrecta;
 
     inicializar();
 
-    archivo = fopen(ARCHIVO_PROGRAMA, "r");
+    if(argc > 2){
+        printf("*** Uso: %s [archivo.sml] ***\n", argv[0]);
+        return 1;
+    }
+
+    if(argc == 2){
+        nombreArchivo = argv[1];
+    }
+
+    archivo = fopen(nombreArchivo, "r");
 
     if (archivo != NULL){
         printf("*** Bienvenido a Simpletron! ***\n");
-        printf("*** Cargando programa desde %s***\n", ARCHIVO_PROGRAMA);
-        cargaCorrecta = cargarPrograma(archivo, 0);
+        printf("*** Cargando programa desde %s***\n", nombreArchivo);
+        cargaCorrecta = cargarPrograma(archivo, 0, nombreArchivo);
         fclose(archivo);
+    }else if(argc == 2){
+        printf("*** error: no se pudo abrir el archivo %s ***\n", nombreArchivo);
+        return 1;
     } else{
         mostrarBienvenida();
-        cargaCorrecta =  cargarPrograma(stdin, 1);
+        cargaCorrecta =  cargarPrograma(stdin, 1, "teclado");
     }
 
     if(!cargaCorrecta){
@@ -130,7 +144,7 @@ void inicializar(void){
     operand = 0;
 }
 
-int cargarPrograma(FILE *fuente, int interactivo){
+int cargarPrograma(FILE *fuente, int interactivo, const char *nombreArchivo){
 
     char linea[TAM_LINEA];
     char sobrante;
@@ -138,6 +152,8 @@ int cargarPrograma(FILE *fuente, int interactivo){
     int numeroLinea = 0;
     int palabra;
     int leidos;
+    char *comentario;
+    int caracter;
 
     while(posicion < TAM_MEMORIA){
 
@@ -150,6 +166,17 @@ int cargarPrograma(FILE *fuente, int interactivo){
         }
 
         numeroLinea++;
+
+        if(strchr(linea,'\n') == NULL && !feof(fuente)){
+            while((caracter = fgetc(fuente)) != '\n' && caracter != EOF){
+
+            }
+        }
+
+        comentario = strchr(linea, ';');
+        if(comentario != NULL){
+            *comentario = '\0';
+        }
 
         leidos = sscanf(linea, "%d %c", &palabra, &sobrante);
 
@@ -164,7 +191,7 @@ int cargarPrograma(FILE *fuente, int interactivo){
         if(leidos != 1 || palabra < PALABRA_MIN || palabra > CENTINELA - 1){
 
             if(!interactivo){
-                printf("*** Error en %s, linea %d ***\n", ARCHIVO_PROGRAMA, numeroLinea);
+                printf("*** Error en %s, linea %d ***\n", nombreArchivo, numeroLinea);
             }
 
             if(leidos != 1){
@@ -356,8 +383,7 @@ int operarFlotante(int codigo, double valor){
    acumuladorFlotante = resultado;
    return 1;
 }
-
-    
+  
 void ejecutarPrograma(void){
     
     int valor;
