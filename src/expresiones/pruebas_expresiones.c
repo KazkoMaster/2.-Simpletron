@@ -1,14 +1,20 @@
 #include <stdio.h>
 #include "pila.h"
 #include "expresiones.h"
+#include <string.h>
 
 void probarPila(void);
 void probarAgrupacion(void);
 void probarConversion(void);
 void probarEvaluacion(void);
+void modoInteractivo(void);
 
-
-int main(void){
+int main(int argc, char *argv[]){
+    if (argc == 2 && strcmp(argv[1], "-i") == 0){
+        modoInteractivo();
+        return 0;
+    }
+    
     probarPila();
     probarAgrupacion();
     probarConversion();
@@ -171,4 +177,48 @@ void probarEvaluacion(void){
         }
     }
     printf("\n");
+}
+
+void modoInteractivo(void){
+
+    char linea[TAM_EXPRESION];
+    char postfija[TAM_POSTFIJA];
+    int resultado;
+    int largo;
+
+    printf("==== Modo interactivo ====\n");
+    printf("Escriba una expresion (linea vacia para salir).\n");
+
+    while(1){
+
+        printf("\n> ");
+        fflush(stdout);
+
+        if(fgets(linea, TAM_EXPRESION, stdin) == NULL){
+            break;
+        }
+
+        largo = strlen(linea);
+        if(largo > 0 && linea [largo - 1] == '\n'){
+            linea[largo - 1] = '\0';
+        }
+
+        if(linea[0] == '\0'){
+            break;
+        }
+
+        printf("Profundidad maxima: %d\n", profundidad(linea));
+
+        if(!infijaAPostfija(linea, postfija)){
+            continue;
+        }
+
+        printf("Postfija: %s\n", postfija);
+
+        if(evaluarPostfija(postfija, &resultado)){
+            printf("Resultado: %d\n", resultado);
+        }
+    }
+    printf("Fin del modo interactivo. \n");
+    
 }
