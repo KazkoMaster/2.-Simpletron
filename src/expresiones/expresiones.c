@@ -143,14 +143,15 @@ int infijaAPostfija(const char infija[], char postfija[]){
             continue;
         }
 
-   if(isdigit((unsigned char) c) || isalpha((unsigned char) c)){
+   if(isdigit((unsigned char) c) || isalpha((unsigned char) c) || (c == '-' && esperaOperando && isdigit((unsigned char) infija[i + 1]))){
 
             if(!esperaOperando){
                 printf("*** Error: falta un operador antes de la posicion %d ***\n", i);
                 return 0;
             }
 
-            if(isdigit((unsigned char) c)){
+              if(c == '-' || isdigit((unsigned char) c)){
+                postfija[j++] = infija[i++];
                 while(isdigit((unsigned char) infija[i])){
                     postfija[j++] = infija[i++];
                 }
@@ -310,6 +311,7 @@ static int aplicarOperador(char operador, int a, int b, int*resultado){
     int b;
     int valor;
     char c;
+    int signo;
 
     inicializarPila(&pila);
 
@@ -322,9 +324,16 @@ static int aplicarOperador(char operador, int a, int b, int*resultado){
             continue;
         }
 
-        if(isdigit((unsigned char) c)){
+         if(isdigit((unsigned char) c) || (c == '-' && isdigit((unsigned char) postfija[i + 1]))){
+
+            signo = 1;
+            if(c == '-'){
+                signo = -1;
+                i++;
+            }
 
             numero = 0;
+
             while(isdigit((unsigned char) postfija[i])){
                 numero = numero * 10 + (postfija[i] - '0');
                 if(numero > VALOR_MAX){
@@ -334,7 +343,7 @@ static int aplicarOperador(char operador, int a, int b, int*resultado){
                 i++;
             }
 
-            if(!push(&pila, numero)){
+            if(!push(&pila, signo * numero)){
                 return 0;
             }
             continue;
