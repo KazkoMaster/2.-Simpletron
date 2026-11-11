@@ -4,11 +4,13 @@
 
 void probarPila(void);
 void probarAgrupacion(void);
+void probarConversion(void);
 
 
 int main(void){
     probarPila();
     probarAgrupacion();
+    probarConversion();
     return 0;
 }
 
@@ -72,6 +74,42 @@ void probarAgrupacion(void){
         printf("\nExpresion : %s\n", casos[i]);
         printf("Profundidad maxima: %d\n", profundidad(casos[i]));
         printf("Agrupacion: %s\n", verificarAgrupacion(casos[i]) ? "correcta" : "incorrecta");
+    }
+    printf("\n");
+}
+
+void probarConversion(void){
+
+    const char *casos[] = {
+        "3 + 5 * 4",
+        "(3 + 5) * 4",
+        "10 - 4 - 3",
+        "2 ^ 3 ^ 2",
+        "100 / (20 - 15) * 3",
+        "a * (b + c) - d ^ 2",
+        "{[2 + 3] * (4 - 1)}",
+        "7-((x*((x+y)/(j-3))+y)/(4-2))",
+        "3 +",
+        "* 3",
+        "3 4",
+        "3 $ 4",
+        "(3 + 4",
+        "ab + 1"
+    };
+
+    int totalCasos = sizeof(casos) / sizeof(casos[0]);
+    char postfija[TAM_POSTFIJA];
+    int i;
+
+    printf("==== Pruebas de conversion infija a postfija ====\n");
+
+    for(i = 0; i < totalCasos; i++){
+        printf("\nInfija:   %s\n", casos[i]);
+        if(infijaAPostfija(casos[i], postfija)){
+            printf("Postfija: %s\n", postfija);
+        } else{
+            printf("Postfija: (no se pudo convertir)\n");
+        }
     }
     printf("\n");
 }
