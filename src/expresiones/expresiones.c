@@ -241,3 +241,150 @@ int infijaAPostfija(const char infija[], char postfija[]){
 
     return 1;
 }
+
+/* Aplica un operador a dos operandos. Usa long long para detectar
+ * resultados fuera del rango de una palabra de Simpletron.
+ * Regresa 1 si la operacion fue valida y 0 si hubo un error. */
+
+static int aplicarOperador(char operador, int a, int b, int*resultado){
+
+    long long valor = 0;
+    int i;
+
+    switch(operador){
+        case '+':
+            valor = (long long) a + b;
+            break;
+
+        case '-':
+            valor = (long long) a - b;
+            break;
+
+        case '*':
+            valor = (long long) a * b;
+            break;
+
+        case '/':
+            if(b == 0){
+                printf("*** Error: division entre 0 ***\n");
+                return 0;
+            }
+            valor = a / b;
+            break;
+
+        case '^':
+            if(b < 0){
+                printf("*** Error: exponente negativo ***\n");
+                return 0;
+            }
+            valor = 1;
+            for(i = 0; i < b; i++){
+                valor = valor * a;
+                if(valor > VALOR_MAX || valor < -VALOR_MAX){
+                    break;
+                }
+            }
+        break;
+    }
+
+    if(valor > VALOR_MAX || valor < -VALOR_MAX){
+        printf("*** Error: el resultado de %d %c %d sale del rango (-%d a %d) ***\n", a, operador, b, VALOR_MAX, VALOR_MAX);
+        return 0;
+    }
+
+    *resultado = (int) valor;
+    return 1;
+}
+
+/* Evalua una expresion postfija cuyos elementos estan separados
+ * por espacios. Solo acepta numeros enteros, no variables.
+ * Regresa 1 y deja el valor en *resultado si fue correcta,
+ * o 0 si hubo un error. */
+
+ int evaluarPostfija(const char postfija[], int *resultado){
+
+    Pila pila;
+    int i = 0;
+    int numero;
+    int a;
+    int b;
+    int valor;
+    char c;
+
+    inicializarPila(&pila);
+
+    while(postfija[i] != '\0'){
+
+        c = postfija[i];
+
+        if(c == ' '){
+            i++;
+            continue;
+        }
+
+        if(isdigit((unsigned char) c)){
+
+            numero = 0;
+            while(isdigit((unsigned char) postfija[i])){
+                numero = numero * 10 + (postfija[i] - '0');
+                if(numero > VALOR_MAX){
+                    printf("*** Error: la constante sale del rango(maximo %d) ***\n", VALOR_MAX);
+                    return 0;
+                }
+                i++;
+            }
+
+            if(!push(&pila, numero)){
+                return 0;
+            }
+            continue;
+        }
+
+        if(esOperador(c)){
+
+            if(isEmpty(&pila)){
+                printf("*** Error: falta un operando para '%c' ***\n", c);
+                return 0;
+            }
+            pop(&pila, &b);
+
+             if(isEmpty(&pila)){
+                printf("*** Error: falta un operando para '%c' ***\n", c);
+                return 0;
+            }
+            pop(&pila, &a);
+
+            if(!aplicarOperador(c, a, b, &valor)){
+                return 0;
+            }
+
+            push(&pila, valor);
+        }
+
+        else if(isalpha((unsigned char) c)){
+            printf("*** Error: la variable '%c' no tiene valor; solo se evaluan numeros ***\n", c);
+            return 0;
+        } else{
+            printf("*** Error: caracter no valido '%c' en la postfija ***\n", c);
+            return 0;
+        }
+
+        i++;
+    }
+
+    if(isEmpty(&pila)){
+        printf("*** Error: la expresion esta vacia***\n");
+        return 0;
+    }
+
+    pop(&pila, &valor);
+
+    if(!isEmpty(&pila)){
+        printf("*** Error: sobran operandos en la expresion***\n");
+        return 0;
+    }
+
+    *resultado = valor;
+    return 1;
+
+ }

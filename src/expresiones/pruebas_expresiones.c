@@ -5,12 +5,14 @@
 void probarPila(void);
 void probarAgrupacion(void);
 void probarConversion(void);
+void probarEvaluacion(void);
 
 
 int main(void){
     probarPila();
     probarAgrupacion();
     probarConversion();
+    probarEvaluacion();
     return 0;
 }
 
@@ -109,6 +111,63 @@ void probarConversion(void){
             printf("Postfija: %s\n", postfija);
         } else{
             printf("Postfija: (no se pudo convertir)\n");
+        }
+    }
+    printf("\n");
+}
+
+void probarEvaluacion(void){
+
+    const char *infijas[] = {
+        "3 + 5 * 4",
+        "(3 + 5) * 4",
+        "10 - 4 - 3",
+        "2 ^ 3 ^ 2",
+        "100 / (20 - 15) * 3",
+        "{[2 + 3] * (4 - 1)}",
+        "7 - 10",
+        "17 / 5",
+        "8 / (4 - 4)",
+        "10 ^ 6",
+        "x + 1"
+    };
+    const char *postfijas[] = {
+        "4 5 6",
+        "4 +",
+        "123456 1 +"
+    };
+
+    int totalInfijas = sizeof(infijas) / sizeof(infijas[0]);
+    int totalPostfijas = sizeof(postfijas) / sizeof(postfijas[0]);
+    char postfija[TAM_POSTFIJA];
+    int resultado;
+    int i;
+
+    printf("==== Pruebas de evaluacion (infija -> postfija -> resultados) ====\n");
+
+    for(i = 0; i < totalInfijas; i++){
+        printf("\nInfija:    %s\n", infijas[i]);
+        if(!infijaAPostfija(infijas[i], postfija)){
+            printf("Resultado: (no se pudo convertir)\n");
+            continue;
+        }
+        printf("Postfija: %s\n", postfija);
+        if(evaluarPostfija(postfija, &resultado)){
+            printf("Resultado: %d\n", resultado);
+        } else{
+            printf("Resultado: (no se pudo evaluar)\n");
+        }
+    }
+
+    printf("\n ---- Postfijas mal formadas ----");
+
+    for (i = 0; i < totalPostfijas; i++)
+    {
+        printf("\nPostfija:  %s\n", postfijas[i]);
+        if(evaluarPostfija(postfijas[i], &resultado)){
+            printf("Resutlado: %d\n", resultado);
+        } else{
+            printf("Resultado: (no se pudo evaluar)\n");   
         }
     }
     printf("\n");
