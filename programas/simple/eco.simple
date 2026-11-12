@@ -1,0 +1,7 @@
+10 rem Lee un numero, lo imprime y salta hacia adelante
+20 input a
+30 print a
+40 goto 60
+50 goto 20
+60 print 100
+70 end
