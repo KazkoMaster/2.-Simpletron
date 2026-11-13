@@ -408,6 +408,49 @@ static void primeraPasada(FILE *fuente){
     }
 }
 
+static void segundaPasada(void){
+
+    int i;
+    int ubicacion;
+
+    for(i = 0; i < contadorInstrucciones; i++){
+
+        if(flags[i] != -1){
+
+            ubicacion = buscarSimbolo(flags[i], TIPO_LINEA);
+            lineaActual = lineaFuente[i];
+
+            if(ubicacion == -1){
+                printf("*** Error en la linea %d: la linea destino %d no existe ***\n", lineaActual, flags[i]);
+                errores++;
+            } else{
+                sml[i] += ubicacion;
+            }
+        }
+    }
+}
+
+/* Mueve los datos de la parte alta de la memoria para que queden
+ * justo despues del codigo, y corrige los operandos que los usan.
+ * Asi el archivo .sml es continuo, como lo carga el simulador. */
+static void reubicarDatos(void){
+
+    int desplazamiento = (contadorDatos + 1) - contadorInstrucciones;
+    int i;
+
+    for(i = 0; i < contadorInstrucciones; i++){
+        if(sml[i] % DIVISOR_OPERANDO > contadorDatos){
+            sml[i] -= desplazamiento;
+        }
+    }
+
+    for(i = contadorDatos + 1; i < TAM_MEMORIA; i++){
+        sml[i - desplazamiento] = sml[i];
+    }
+
+    reubicarTabla(contadorDatos, desplazamiento);
+}
+
 static const char *nombreOperacion(int operacion){
 
     switch(operacion){
@@ -448,6 +491,56 @@ static void imprimirCodigo(const char titulo[]){
     }
 }
 
+static int escribirArchivo(const char archivoEntrada[], const char archivoSalida[]){
+
+    FILE *salida;
+    EntradaTabla dato;
+    int totalDatos = (TAM_MEMORIA - 1) - contadorDatos;
+    int i;
+    int operacion;
+
+    salida = fopen(archivoSalida, "w");
+
+    if(salida == NULL){
+        printf("*** Error: no se pudo crear el archivo %s ***\n", archivoSalida);
+        return 0;
+    }
+
+    fprintf(salida, "; %s - Generado por el compilador Simple -> SML\n", archivoSalida);
+    fprintf(salida, "; Fuente: %s\n", archivoEntrada);
+    fprintf(salida, "; Codigo: 000-%03d   Datos:%03d-%03d\n\n", contadorInstrucciones - 1, contadorInstrucciones, contadorInstrucciones+ totalDatos - 1);
+
+    for(i = 0; i < contadorInstrucciones; i++){
+        operacion = sml[i] / DIVISOR_OPERANDO;
+        fprintf(salida, "%+06d   ; %03d %-10s %03d   (linea %d)\n", sml[i], i, nombreOperacion(operacion), sml[i] % DIVISOR_OPERANDO, lineaFuente[i]);
+    }
+
+    fprintf(salida, "\n; ----- Area de datos -----\n");
+
+    for(i = contadorInstrucciones; i < contadorInstrucciones + totalDatos; i++){
+
+        fprintf(salida, "%+06d   ; %03d ", sml[i], i);
+
+        if(buscarPorUbicacion(i, &dato)){
+            if(dato.tipo == TIPO_VARIABLE){
+                fprintf(salida, "variable %c\n", (char) dato.simbolo);
+            } else if(dato.tipo == TIPO_CONSTANTE){
+                fprintf(salida, "constante %d\n", dato.simbolo);
+            } else{
+                fprintf(salida, "temporal t%d\n", dato.simbolo);
+            }
+        } else{
+            fprintf(salida, "\n");
+        }
+    }
+
+    fprintf(salida, "+99999   ; fin del programa\n");
+    fclose(salida);
+
+    printf("\n*** Se genero %s (%d palabras) ***\n", archivoSalida, contadorInstrucciones + totalDatos);
+    return 1;
+}
+
 /* ----- Funcion principal del modulo -----*/
 int compilar(const char archivoEntrada[], const char archivoSalida[]){
 
@@ -466,13 +559,18 @@ int compilar(const char archivoEntrada[], const char archivoSalida[]){
     fclose(fuente);
 
     imprimirCodigo("Primera pasada (SML preliminar)");
-    imprimirTabla();
+    
+    segundaPasada();
 
     if(errores > 0){
-        printf("\n*** Compilacion fallida: %d errores, no se genero el archivo ***\n", errores);
+        printf("\n*** Compilacion fallida: %d error(es). No se genero el archivo. ***\n", errores);
         return 0;
     }
 
-    (void) archivoSalida;
-    return 1;
+    reubicarDatos();
+    imprimirCodigo("Segunda pasada (SML Final)");
+    imprimirTabla();
+
+    return escribirArchivo(archivoEntrada, archivoSalida);
 }
+
