@@ -1,0 +1,8 @@
+10 rem Caso 2 del profesor: imprime el mayor de dos numeros
+20 input s
+30 input t
+40 if s >= t goto 70
+50 print t
+60 goto 80
+70 print s
+80 end

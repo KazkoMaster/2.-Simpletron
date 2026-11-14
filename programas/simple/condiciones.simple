@@ -1,0 +1,29 @@
+10 rem Prueba los seis operadores relacionales con a y b
+20 rem Imprime 1 si la condicion es verdadera y 0 si es falsa
+30 input a
+40 input b
+50 if a < b goto 80
+60 print 0
+70 goto 90
+80 print 1
+90 if a <= b goto 120
+100 print 0
+110 goto 130
+120 print 1
+130 if a > b goto 160
+140 print 0
+150 goto 170
+160 print 1
+170 if a >= b goto 200
+180 print 0
+190 goto 210
+200 print 1
+210 if a == b goto 240
+220 print 0
+230 goto 250
+240 print 1
+250 if a != b goto 280
+260 print 0
+270 goto 290
+280 print 1
+290 end

@@ -262,15 +262,72 @@ static void compilarGoto(const char destino[]){
     generarSalto(OP_BRANCH, lineaDestino);
 }
 
+/* if a op b goto n
+ *   ==  LOAD a, SUBTRACT b, BRANCHZERO n
+ *   !=  LOAD a, SUBTRACT b, BRANCHZERO (siguiente), BRANCH n
+ *   <   LOAD a, SUBTRACT b, BRANCHNEG n
+ *   >   LOAD b, SUBTRACT a, BRANCHNEG n
+ *   <=  LOAD a, SUBTRACT b, BRANCHNEG n, BRANCHZERO n
+ *   >=  LOAD b, SUBTRACT a, BRANCHNEG n, BRANCHZERO n */
 static void compilarIf(const char izquierdo[], const char operador[], const char derecho[], const char palabraGoto[], const char destino[]){
 
-    (void) izquierdo;
-    (void) operador;
-    (void) derecho;
-    (void) palabraGoto;
-    (void) destino;
-    reportarError("if todavia no esta implementado");
+    int ubicacionA;
+    int ubicacionB;
+    int lineaDestino;
 
+    if(izquierdo == NULL || operador == NULL || derecho == NULL || palabraGoto == NULL || destino == NULL){
+        reportarError("formato: if <a> <operador> <b> goto<linea>");
+        return;
+    }
+
+    if(strcmp(palabraGoto, "goto") != 0){
+        reportarError("falta goto en el if");
+        return;
+    }
+
+    if(!esNumeroDeLinea(destino, &lineaDestino)){
+        reportarError("la condicion solo acepta variables o constantes");
+        return;
+    }
+
+    ubicacionA = ubicacionOperando(izquierdo);
+    ubicacionB = ubicacionOperando(derecho);
+
+    if(ubicacionA == -1 || ubicacionB == -1){
+        reportarError("la condicion solo acepta variables o constantes");
+        return;
+    }
+
+    if(strcmp(operador, "==") == 0){
+        emitir(OP_LOAD, ubicacionA);
+        emitir(OP_SUBTRACT, ubicacionB);
+        generarSalto(OP_BRANCHZERO, lineaDestino);
+    } else if(strcmp(operador, "!=") == 0){
+        emitir(OP_LOAD, ubicacionA);
+        emitir(OP_SUBTRACT, ubicacionB);
+        emitir(OP_BRANCHZERO, contadorInstrucciones + 2);
+        generarSalto(OP_BRANCH, lineaDestino);
+    } else if(strcmp(operador, "<") == 0){
+        emitir(OP_LOAD, ubicacionA);
+        emitir(OP_SUBTRACT, ubicacionB);
+        generarSalto(OP_BRANCHNEG, lineaDestino);
+    } else if(strcmp(operador, ">") == 0){
+        emitir(OP_LOAD, ubicacionB);
+        emitir(OP_SUBTRACT, ubicacionA);
+        generarSalto(OP_BRANCHNEG, lineaDestino);
+    } else if(strcmp(operador, "<=") == 0){
+        emitir(OP_LOAD, ubicacionA);
+        emitir(OP_SUBTRACT, ubicacionB);
+        generarSalto(OP_BRANCHNEG, lineaDestino);
+        generarSalto(OP_BRANCHZERO, lineaDestino);
+    } else if(strcmp(operador, ">=") == 0){
+        emitir(OP_LOAD, ubicacionB);
+        emitir(OP_SUBTRACT, ubicacionA);
+        generarSalto(OP_BRANCHNEG, lineaDestino);
+        generarSalto(OP_BRANCHZERO, lineaDestino);
+    } else{
+        reportarError("operador racional no valido (use < <= > >= == !=)");
+    }
 }
 
 static void compilarLet(const char variable[], const char igual[], const char expresion[]){
@@ -372,8 +429,8 @@ static int compilarLinea(char linea[], int *ultimaLinea){
         emitir(OP_HALT, 0);
         return 1;
     } else if(strcmp(comando, "input") == 0 || strcmp(comando, "print") == 0 ||
-              strcmp(comando, "goto") == 0 || strcmp(comando, "if") == 0 ||
-              strcmp(comando, "end") == 0){
+            strcmp(comando, "goto") == 0 || strcmp(comando, "if") == 0 ||
+            strcmp(comando, "end") == 0){
         reportarError("sobran elementos al final de la linea");
     } else{
         reportarError("comando desconocido");
